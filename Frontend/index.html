@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Procesador de Imágenes</title>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>Procesador de Imágenes</h1>
+
+    <form id="uploadForm">
+
+      <input type="file" id="imageInput" accept="image/*" required>
+
+      <select id="taskType">
+        <option value="resize">Redimensionar</option>
+        <option value="grayscale">Filtro grayscale</option>
+        <option value="thumbnail">Miniatura</option>
+        <option value="convert">Convertir formato</option>
+      </select>
+
+      <button type="submit">
+        Procesar imagen
+      </button>
+
+    </form>
+
+    <div class="preview-container">
+      <img id="preview" />
+    </div>
+
+    <div class="status-container">
+      <h3>Estado:</h3>
+      <p id="status">Esperando tarea...</p>
+    </div>
+
+    <div id="resultContainer"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
