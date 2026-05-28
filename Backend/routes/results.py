@@ -33,7 +33,7 @@ async def download_result(
     
     return FileResponse(
         path=task.result_file_path,
-        filename=f"processed_{task.original_filename}",
+        filename = os.path.basename(task.result_file_path),
         media_type="application/octet-stream"
     )
 
@@ -42,17 +42,20 @@ async def get_result_info(
     task_id: str,
     db: Session = Depends(get_db)
 ):
-    """Obtener información del resultado"""
-    
+
     task = db.query(Task).filter(Task.id == task_id).first()
+
     if not task:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
-    
+        raise HTTPException(
+            status_code=404,
+            detail="Tarea no encontrada"
+        )
+
     return {
         "task_id": task.id,
         "original_filename": task.original_filename,
-        "process_type": task.process_type.value,
-        "status": task.status.value,
+        "process_type": str(task.process_type),
+        "status": str(task.status),
         "result_available": task.status == TaskStatus.COMPLETED,
         "result_file_path": task.result_file_path,
         "created_at": task.created_at,
