@@ -1,0 +1,173 @@
+services:
+
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: procesador_postgres
+
+    environment:
+      POSTGRES_DB: procesador_db
+      POSTGRES_USER: procesador
+      POSTGRES_PASSWORD: procesador123
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U procesador"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: procesador_redis
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend + Frontend
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    container_name: procesador_backend
+
+    working_dir: /app
+
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql://procesador:procesador123@postgres:5432/procesador_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DEBUG: "True"
+
+    volumes:
+      - ./Backend:/app
+      - ./Frontend:/frontend
+      - /tmp/uploads:/tmp/uploads
+      - /tmp/results:/tmp/results
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+  # Worker 1
+  worker1:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    container_name: procesador_worker1
+
+    working_dir: /app
+
+    command: celery -A tasks.celery worker --loglevel=info --concurrency=2 -n worker1@%h
+
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql://procesador:procesador123@postgres:5432/procesador_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+    volumes:
+      - ./Backend:/app
+      - /tmp/uploads:/tmp/uploads
+      - /tmp/results:/tmp/results
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+  # Worker 2
+  worker2:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    container_name: procesador_worker2
+
+    working_dir: /app
+
+    command: celery -A tasks.celery worker --loglevel=info --concurrency=2 -n worker2@%h
+
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql://procesador:procesador123@postgres:5432/procesador_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+    volumes:
+      - ./Backend:/app
+      - /tmp/uploads:/tmp/uploads
+      - /tmp/results:/tmp/results
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+  # Worker 3
+  worker3:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    container_name: procesador_worker3
+
+    working_dir: /app
+
+    command: celery -A tasks.celery worker --loglevel=info --concurrency=2 -n worker3@%h
+
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql://procesador:procesador123@postgres:5432/procesador_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+
+    volumes:
+      - ./Backend:/app
+      - /tmp/uploads:/tmp/uploads
+      - /tmp/results:/tmp/results
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
